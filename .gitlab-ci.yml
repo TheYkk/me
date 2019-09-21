@@ -23,11 +23,6 @@ build:
   stage: build
   script:
     - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
-    - echo $CONTAINER_GENERAL_IMAGE
-    - echo $CI_REGISTRY_IMAGE
-    - echo $CI_PROJECT_NAME
-    - echo $CONTAINER_IMAGE_NAME
-    - echo ${CONTAINER_GENERAL_IMAGE}
     - docker build --pull -t $CONTAINER_GENERAL_IMAGE .
     - docker push $CONTAINER_GENERAL_IMAGE
   only:
@@ -39,8 +34,9 @@ prod:
   stage: prod
   script:
     - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
-    - docker build --pull -t $CONTAINER_LATEST_IMAGE .
+    - docker build --pull -t $CONTAINER_LATEST_IMAGE . -t $CONTAINER_GENERAL_IMAGE .
     - docker push $CONTAINER_LATEST_IMAGE
+    - docker push $CONTAINER_GENERAL_IMAGE
   only:
     - master
 
@@ -65,4 +61,4 @@ deploy_dev:
     - mv ./kubectl /usr/local/bin/kubectl
     - mkdir -p $HOME/.kube
     - echo -n $KUBE_CONFIG | base64 -d > $HOME/.kube/config
-    - kubectl rolling-update my-nginx --image=$CONTAINER_LATEST_IMAGE  --namespace default
+    - kubectl rolling-update my-nginx --image=$CONTAINER_LATEST_IMAGE  --namespace default --image-pull-policy=Always
