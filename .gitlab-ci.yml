@@ -4,10 +4,12 @@ stages:
   - build
   - prod
   - stable
+  - deploy
 
 before_script:
   - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
   - export CONTAINER_IMAGE_NAME="theykk/${CI_PROJECT_NAME}"
+  - export KUBE_CONFIG="${CI_K8S_CONFIG}"
   - export CONTAINER_GENERAL_IMAGE="${CONTAINER_IMAGE_NAME}:${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHA}"
   - export CONTAINER_TAGGED_IMAGE="${CONTAINER_IMAGE_NAME}:${CI_COMMIT_REF_NAME}"
   - export CONTAINER_LATEST_IMAGE="${CONTAINER_IMAGE_NAME}:latest"
@@ -48,3 +50,13 @@ stable:
     - docker push $CONTAINER_TAGGED_IMAGE
   only:
     - tags
+
+deploy_app:
+  image: bitnami/kubectl:latest
+  stage: deploy
+  #environment: production
+  only:
+    - master
+  script:
+    - echo -n $KUBE_CONFIG | base64 -d > ./config
+    - kubectl rolling-update my-nginx --image=$CONTAINER_LATEST_IMAGE --kubeconfig ./config --namespace default
