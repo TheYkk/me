@@ -1,0 +1,50 @@
+image: docker:latest
+
+stages:
+  - build
+  - prod
+  - stable
+
+before_script:
+  - echo "${CI_REGISTRY_PASSWORD}" | docker login -u "${CI_REGISTRY_USER}" --password-stdin "${CI_REGISTRY}"
+  - export CONTAINER_IMAGE_NAME="theykk/${CI_PROJECT_NAME}"
+  - export CONTAINER_GENERAL_IMAGE="${CONTAINER_IMAGE_NAME}:${CI_COMMIT_REF_NAME}_${CI_COMMIT_SHA}"
+  - export CONTAINER_TAGGED_IMAGE="${CONTAINER_IMAGE_NAME}:${CI_COMMIT_REF_NAME}"
+  - export CONTAINER_LATEST_IMAGE="${CONTAINER_IMAGE_NAME}:latest"
+ 
+variables:
+  DOCKER_DRIVER: overlay
+
+services:
+    - docker:dind
+
+build:
+  stage: build
+  script:
+    - echo  $CONTAINER_GENERAL_IMAGE
+    - echo $CI_REGISTRY_IMAGE
+    - echo $CI_PROJECT_NAME
+    - echo $CONTAINER_IMAGE_NAME
+    - echo ${CONTAINER_GENERAL_IMAGE}
+    - docker build --pull -t $CONTAINER_GENERAL_IMAGE .
+    - docker push $CONTAINER_GENERAL_IMAGE
+  only:
+    - branches
+  except:
+    - master
+
+prod:
+  stage: prod
+  script:
+    - docker build --pull -t $CONTAINER_LATEST_IMAGE .
+    - docker push $CONTAINER_LATEST_IMAGE
+  only:
+    - master
+
+stable:
+  stage: stable
+  script:
+    - docker build --pull -t $CONTAINER_TAGGED_IMAGE .
+    - docker push $CONTAINER_TAGGED_IMAGE
+  only:
+    - tags
