@@ -30,7 +30,7 @@ spec:
       volumes:
       - name: secret-volume
         secret:
-          secretName: nginxsecret
+          secretName: theykk-net-tls-prod
       - name: configmap-volume
         configMap:
           name: nginxconfigmap
