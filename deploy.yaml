@@ -5,7 +5,7 @@ metadata:
   labels:
     app: theykk-me-nginx
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
   - port: 80
     protocol: TCP
