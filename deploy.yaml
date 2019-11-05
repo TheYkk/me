@@ -13,6 +13,9 @@ spec:
   - port: 443
     protocol: TCP
     name: https
+  - port: 443
+    protocol: UDP
+    name: quick
   selector:
     app: theykk-me-nginx
 ---

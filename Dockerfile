@@ -1,3 +1,3 @@
 FROM nwtgck/nginx-http3
-COPY default.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /usr/local/nginx/conf/nginx.conf
 COPY . /usr/share/nginx/html
