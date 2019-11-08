@@ -62,4 +62,4 @@ deploy_dev:
     - mv ./kubectl /usr/local/bin/kubectl
     - mkdir -p $HOME/.kube
     - echo -n $KUBE_CONFIG | base64 -d > $HOME/.kube/config
-    - kubectl rolling-update my-nginx --image=$CONTAINER_LATEST_IMAGE  --namespace default --image-pull-policy=Always
+    - kubectl rolling-update my-nginx --image=$CONTAINER_GENERAL_IMAGE  --namespace default --image-pull-policy=Always
