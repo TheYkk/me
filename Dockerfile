@@ -1,3 +1,5 @@
-FROM nwtgck/nginx-http3
-COPY nginx.conf /usr/local/nginx/conf/nginx.conf
+FROM ranadeeppolavarapu/nginx-http3:latest
+COPY nginx.conf /etc/nginx/
+COPY h3.nginx.conf /etc/nginx/conf.d/
+
 COPY . /usr/share/nginx/html
