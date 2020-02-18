@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: theykk-me-nginx
-  namespace: default
 spec:
   replicas: 1
   selector:
@@ -13,53 +12,84 @@ spec:
       labels:
         app: theykk-me-nginx
     spec:
+      serviceAccountName: httpbin
       volumes:
       - name: secret-volume
         secret:
-          secretName: theykk-net-tls-prod
+          secretName: theykkcert
       containers:
-      - name: nginx-https
-        image: theykk/me
-        # ports:
-        # - containerPort: 443
-        # - containerPort: 80        
+      - name: theykk-me-nginx
+        image: theykk/me:com_299f7fae96ab7bb8558b1f3cdc9fb31c6235e216
+        ports:
+        - containerPort: 443
+        - containerPort: 80        
         volumeMounts:
         - mountPath: /etc/nginx/ssl
           name: secret-volume
 ---
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: httpbin
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: theykk-me-nginx
-  namespace: default
+  labels:
+    app: theykk-me-nginx
 spec:
+  type: NodePort
   ports:
   - name: http
     port: 80
-    targetPort: 80
   - name: https
     port: 443
-    targetPort: 443
   selector:
     app: theykk-me-nginx
 ---
-apiVersion: extensions/v1beta1
-kind: Ingress
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
 metadata:
-  name: theykk-me-nginx
-  namespace: default
-  annotations:
-    kubernetes.io/ingress.class: traefik        
+  name: theykk-com-gateway
 spec:
-  tls:
-  - hosts:
-    - theykk.net
-    secretName: theykk-net-tls-prod
-  rules:
-  - host: theykk.net
-    http:
-      paths:
-      - path: 
-        backend:
-          serviceName: theykk-me-nginx
-          servicePort: http
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "theykk.com"
+    tls:
+      httpsRedirect: true # sends 301 redirect for http requests
+  - port:
+      number: 443
+      name: https-443
+      protocol: HTTPS
+    hosts:
+    - "theykk.com"
+    tls:
+      mode: SIMPLE
+      serverCertificate: /etc/istio/ingressgateway-certs/tls.crt
+      privateKey: /etc/istio/ingressgateway-certs/tls.key
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: theykk-com
+spec:
+  hosts:
+  - "theykk.com"
+  gateways:
+  - theykk-com-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        port:
+          number: 80
+        host: theykk-me-nginx
